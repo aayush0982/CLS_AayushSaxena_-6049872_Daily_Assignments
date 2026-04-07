@@ -21,6 +21,8 @@ import com.cg.demo.entity.Recommendation;
 import com.cg.demo.modal.Catalogue;
 import com.cg.demo.service.CartServiceImpl;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+
 @RestController
 public class CartController {
 
@@ -86,6 +88,7 @@ public class CartController {
 	}
 
 	@GetMapping("/carts/{id}")
+	@CircuitBreaker(name = "cartService", fallbackMethod = "fallbackGetCartById")
 	public Cart getCartById(@PathVariable Integer id) {
 
 		Cart cart = cartService.getCartById(id);
@@ -95,5 +98,15 @@ public class CartController {
 		}
 
 		return cart;
+	}
+
+	public Cart fallbackGetCartById(Integer id, Throwable ex) {
+
+		System.out.println("Circuit Breaker Fallback Triggered: " + ex.getMessage());
+
+		Cart fallbackCart = new Cart();
+		fallbackCart.setCartId(id);
+
+		return fallbackCart;
 	}
 }
